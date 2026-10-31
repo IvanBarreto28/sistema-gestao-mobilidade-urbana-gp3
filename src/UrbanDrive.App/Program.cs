@@ -1,6 +1,7 @@
 using System;
+using UrbanDrive.Models.Entities;
 
-namespace UrbanDrive
+namespace UrbanDrive.App
 {
     class Program
     {

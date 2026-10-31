@@ -1,6 +1,6 @@
 using System;
 
-namespace UrbanDrive
+namespace UrbanDrive.Models.Entities
 {
     public class Veiculo
     {
