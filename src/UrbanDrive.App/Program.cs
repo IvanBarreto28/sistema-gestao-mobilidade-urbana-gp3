@@ -48,6 +48,26 @@ class Program
                 Console.ReadKey();
                 Console.Clear();
             }
+            
+            Console.WriteLine("\n=== Teste de Motorista e CNH ===");
+
+            Motorista motorista = new Motorista(
+                "Filipe",
+                "123.456.789-00",
+                "123456789",
+                "AB",
+                new DateTime(2030, 12, 31)
+            );
+
+            Console.WriteLine("Nome: " + motorista.Nome);
+            Console.WriteLine("CPF: " + motorista.CPF);
+
+            Console.WriteLine("\n=== Dados da CNH ===");
+
+            Console.WriteLine("Registro: " + motorista.CarteiraHabilitacao.NumeroRegistro);
+            Console.WriteLine("Categoria: " + motorista.CarteiraHabilitacao.Categoria);
+            Console.WriteLine("Validade: " + motorista.CarteiraHabilitacao.DataValidade.ToShortDateString());
+
         }
     }
 
