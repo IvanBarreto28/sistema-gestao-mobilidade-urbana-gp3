@@ -67,6 +67,8 @@ namespace UrbanDrive.Models.Entities
             Placa = placa;
             Modelo = modelo;
             ValorDiaria = valorDiaria;
+
+            ConfiguradorSistema.RegistrarVeiculo();
         }
     }
 }

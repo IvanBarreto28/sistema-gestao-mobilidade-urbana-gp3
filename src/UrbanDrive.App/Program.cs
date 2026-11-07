@@ -9,7 +9,7 @@ namespace UrbanDrive.App
         {
             Console.WriteLine("=== UrbanDrive ===");
 
-            // 1. Caso de Sucesso (Fluxo original do grupo)
+            // 1. Caso de Sucesso
             Veiculo veiculo = new Veiculo(
                 1,
                 "ABC1D23",
@@ -115,6 +115,99 @@ namespace UrbanDrive.App
             Console.WriteLine("Categoria: " + motorista.CarteiraHabilitacao.Categoria);
             Console.WriteLine("Validade: " + motorista.CarteiraHabilitacao.DataValidade.ToShortDateString());
 
+            TestarConfiguradorSistema();
+        }
+
+        //Membros estáticos (ConfiguradorSistema)
+        private static void TestarConfiguradorSistema()
+        {
+            Console.WriteLine("\n=== Teste de Membros Estáticos (ConfiguradorSistema) ===");
+
+            // Estado inicial: o Veiculo do caso de sucesso (Sprint 1) já foi contado
+            Console.WriteLine("Taxa de locação inicial: " + (ConfiguradorSistema.TaxaLocacao * 100).ToString("F0") + "%");
+            Console.WriteLine("Veículos criados até agora: " + ConfiguradorSistema.TotalVeiculos);
+
+            // Teste 7: o contador aumenta a cada veículo válido criado
+            int antes = ConfiguradorSistema.TotalVeiculos;
+            Veiculo v1 = new Veiculo(101, "AAA1A11", "Renault Kwid", 100.00m);
+            Veiculo v2 = new Veiculo(102, "BBB2B22", "Fiat Argo", 200.00m);
+            int depois = ConfiguradorSistema.TotalVeiculos;
+            Console.WriteLine("[Teste 7 - Contador após criar 2 veículos]: " +
+                (depois == antes + 2 ? "PASSOU" : "FALHOU") +
+                " (antes: " + antes + ", depois: " + depois + ")");
+
+            // Teste 8: veículo inválido NÃO deve ser contado
+            antes = ConfiguradorSistema.TotalVeiculos;
+            try
+            {
+                Veiculo invalido = new Veiculo(103, "", "Veículo Inválido", 100.00m);
+            }
+            catch (ArgumentException)
+            {
+                // esperado
+            }
+            Console.WriteLine("[Teste 8 - Veículo inválido não entra no contador]: " +
+                (ConfiguradorSistema.TotalVeiculos == antes ? "PASSOU" : "FALHOU"));
+
+            // Teste 9: dois objetos diferentes usam a MESMA taxa compartilhada
+            Console.WriteLine("\n--- Acesso compartilhado entre objetos ---");
+            ConfiguradorSistema.RestaurarTaxaPadrao();
+            Console.WriteLine("Taxa em uso: " + (ConfiguradorSistema.TaxaLocacao * 100).ToString("F0") + "%");
+            Console.WriteLine(v1.Modelo + " -> diária R$ " + v1.ValorDiaria.ToString("F2") +
+                " | com taxa R$ " + ConfiguradorSistema.AplicarTaxaLocacao(v1.ValorDiaria).ToString("F2"));
+            Console.WriteLine(v2.Modelo + " -> diária R$ " + v2.ValorDiaria.ToString("F2") +
+                " | com taxa R$ " + ConfiguradorSistema.AplicarTaxaLocacao(v2.ValorDiaria).ToString("F2"));
+
+            // Teste 10: mudar a taxa uma vez afeta o cálculo para todos os objetos
+            ConfiguradorSistema.TaxaLocacao = 0.25m;
+            Console.WriteLine("\nTaxa alterada para: " + (ConfiguradorSistema.TaxaLocacao * 100).ToString("F0") + "%");
+            decimal novoV1 = ConfiguradorSistema.AplicarTaxaLocacao(v1.ValorDiaria);
+            decimal novoV2 = ConfiguradorSistema.AplicarTaxaLocacao(v2.ValorDiaria);
+            Console.WriteLine(v1.Modelo + " -> com taxa R$ " + novoV1.ToString("F2"));
+            Console.WriteLine(v2.Modelo + " -> com taxa R$ " + novoV2.ToString("F2"));
+            Console.WriteLine("[Teste 10 - Nova taxa vale para todos os objetos]: " +
+                (novoV1 == 125.00m && novoV2 == 250.00m ? "PASSOU" : "FALHOU"));
+
+            // Teste 11: taxa inválida é rejeitada e o valor anterior é mantido
+            try
+            {
+                Console.Write("[Teste 11 - Taxa negativa]: ");
+                ConfiguradorSistema.TaxaLocacao = -0.05m;
+                Console.WriteLine("FALHOU (Permitiu taxa negativa)");
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine("PASSOU -> " + ex.Message);
+            }
+
+            // Teste 12: taxa acima de 100% também é rejeitada
+            try
+            {
+                Console.Write("[Teste 12 - Taxa acima de 100%]: ");
+                ConfiguradorSistema.TaxaLocacao = 1.5m;
+                Console.WriteLine("FALHOU (Permitiu taxa acima de 100%)");
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine("PASSOU -> " + ex.Message);
+            }
+
+            // Teste 13: valor-base inválido no cálculo
+            try
+            {
+                Console.Write("[Teste 13 - Valor-base zero no cálculo]: ");
+                ConfiguradorSistema.AplicarTaxaLocacao(0m);
+                Console.WriteLine("FALHOU (Permitiu valor-base zero)");
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine("PASSOU -> " + ex.Message);
+            }
+
+            // Deixa o sistema no estado padrão para o resto do programa
+            ConfiguradorSistema.RestaurarTaxaPadrao();
+            Console.WriteLine("\nTaxa restaurada para o padrão: " + (ConfiguradorSistema.TaxaLocacao * 100).ToString("F0") + "%");
+            Console.WriteLine("Total final de veículos criados: " + ConfiguradorSistema.TotalVeiculos);
         }
     }
 }
