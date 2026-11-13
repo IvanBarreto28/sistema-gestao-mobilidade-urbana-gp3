@@ -116,6 +116,7 @@ namespace UrbanDrive.App
             Console.WriteLine("Validade: " + motorista.CarteiraHabilitacao.DataValidade.ToShortDateString());
 
             TestarConfiguradorSistema();
+            TestarManutencao(veiculo);
         }
 
         //Membros estáticos (ConfiguradorSistema)
@@ -208,6 +209,45 @@ namespace UrbanDrive.App
             ConfiguradorSistema.RestaurarTaxaPadrao();
             Console.WriteLine("\nTaxa restaurada para o padrão: " + (ConfiguradorSistema.TaxaLocacao * 100).ToString("F0") + "%");
             Console.WriteLine("Total final de veículos criados: " + ConfiguradorSistema.TotalVeiculos);
+        }
+
+        // Sobrecarga de métodos (RealizarManutencao)
+        private static void TestarManutencao(Veiculo veiculo)
+        {
+            Console.WriteLine("\n=== Teste de Manutenção de Veículos (Sobrecarga) ===");
+
+            // Teste 14: RealizarManutencao() sem parâmetros (manutenção preventiva)
+            string manutencaoPreventiva = veiculo.RealizarManutencao();
+            Console.WriteLine("[Teste 14 - RealizarManutencao()]: " +
+                (!string.IsNullOrWhiteSpace(manutencaoPreventiva) && manutencaoPreventiva.Contains("preventiva")
+                    ? "PASSOU"
+                    : "FALHOU") +
+                " -> " + manutencaoPreventiva);
+
+            // Teste 15: RealizarManutencao(string pecaSubstituida) com parâmetro (manutenção corretiva)
+            string peca = "Pastilha de freio";
+            string manutencaoCorretiva = veiculo.RealizarManutencao(peca);
+            Console.WriteLine("[Teste 15 - RealizarManutencao(string pecaSubstituida)]: " +
+                (manutencaoCorretiva.Contains("corretiva") && manutencaoCorretiva.Contains(peca)
+                    ? "PASSOU"
+                    : "FALHOU") +
+                " -> " + manutencaoCorretiva);
+
+            // Teste 16: garantir que as duas sobrecargas tenham comportamentos distintos
+            Console.WriteLine("[Teste 16 - Comportamentos distintos entre sobrecargas]: " +
+                (manutencaoPreventiva != manutencaoCorretiva ? "PASSOU" : "FALHOU"));
+
+            // Teste 17: peça substituída inválida (espaços em branco)
+            try
+            {
+                Console.Write("[Teste 17 - Peça substituída com espaços]: ");
+                veiculo.RealizarManutencao("   ");
+                Console.WriteLine("FALHOU (Permitiu peça com espaços)");
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine("PASSOU -> " + ex.Message);
+            }
         }
     }
 }

@@ -70,5 +70,20 @@ namespace UrbanDrive.Models.Entities
 
             ConfiguradorSistema.RegistrarVeiculo();
         }
+
+        public string RealizarManutencao()
+        {
+            return $"Manutenção preventiva realizada no veículo {Modelo} (Placa: {Placa}): revisão geral de sistemas e segurança concluída.";
+        }
+
+        public string RealizarManutencao(string pecaSubstituida)
+        {
+            if (string.IsNullOrWhiteSpace(pecaSubstituida))
+            {
+                throw new ArgumentException("A peça substituída não pode ser nula, vazia ou conter apenas espaços.");
+            }
+
+            return $"Manutenção corretiva realizada no veículo {Modelo} (Placa: {Placa}): substituição da peça '{pecaSubstituida.Trim()}' concluída.";
+        }
     }
 }
