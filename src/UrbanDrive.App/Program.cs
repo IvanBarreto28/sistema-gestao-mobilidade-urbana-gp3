@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UrbanDrive.Models.Entities;
 
 namespace UrbanDrive.App
@@ -167,7 +168,7 @@ namespace UrbanDrive.App
                 Console.WriteLine("PASSOU -> " + ex.Message);
             }
 
-
+            TestarPolimorfismo();
         }
 
         //Membros estáticos (ConfiguradorSistema)
@@ -299,6 +300,137 @@ namespace UrbanDrive.App
             {
                 Console.WriteLine("PASSOU -> " + ex.Message);
             }
+        }
+
+        // Polimorfismo e integração (Sprint 3)
+        private static void TestarPolimorfismo()
+        {
+            Console.WriteLine("\n=== Teste de Polimorfismo (referências do tipo Veiculo) ===");
+
+            int totalAntes = ConfiguradorSistema.TotalVeiculos;
+
+            // Três objetos de tipos diferentes, todos guardados como Veiculo
+            List<Veiculo> frotaDemo = new List<Veiculo>
+            {
+                new Veiculo(201, "BAS1C01", "Veículo Genérico", 100.00m),
+                new Carro(202, "CAR2R02", "Honda Civic", 150.00m, 4),
+                new Patinete(203, "PAT3N03", "Xiaomi Mi Scooter", 35.00m, 45)
+            };
+
+            // Teste 18: integração com o ConfiguradorSistema (Carro e Patinete também são contados)
+            int totalDepois = ConfiguradorSistema.TotalVeiculos;
+            Console.WriteLine("[Teste 18 - Carro e Patinete entram no contador]: " +
+                (totalDepois == totalAntes + 3 ? "PASSOU" : "FALHOU") +
+                " (antes: " + totalAntes + ", depois: " + totalDepois + ")");
+
+            // Teste 19: o mesmo comando (CalcularAluguel) em uma única lista, cada objeto responde do seu jeito
+            int dias = 5;
+            Console.WriteLine("\n--- Aluguel de " + dias + " dias, chamado por referência Veiculo ---");
+            foreach (Veiculo v in frotaDemo)
+            {
+                decimal valor = v.CalcularAluguel(dias);
+                Console.WriteLine(v.GetType().Name.PadRight(9) + " | " + v.Modelo.PadRight(18) +
+                    " | diária R$ " + v.ValorDiaria.ToString("F2") + " | total R$ " + valor.ToString("F2"));
+            }
+
+            // Teste 20: ligação dinâmica (a chamada via Veiculo executa o override do tipo real)
+            // Se Carro/Patinete tivessem escondido o método com "new" em vez de "override",
+            // a chamada via Veiculo executaria a versão da classe-base e este teste falharia.
+            Veiculo comoVeiculoCarro = frotaDemo[1];
+            Carro comoCarro = (Carro)frotaDemo[1];
+            Veiculo comoVeiculoPatinete = frotaDemo[2];
+            Patinete comoPatinete = (Patinete)frotaDemo[2];
+            Console.WriteLine("\n[Teste 20 - Ligação dinâmica (Carro)]: " +
+                (comoVeiculoCarro.CalcularAluguel(dias) == comoCarro.CalcularAluguel(dias) ? "PASSOU" : "FALHOU"));
+            Console.WriteLine("[Teste 20 - Ligação dinâmica (Patinete)]: " +
+                (comoVeiculoPatinete.CalcularAluguel(dias) == comoPatinete.CalcularAluguel(dias) ? "PASSOU" : "FALHOU"));
+
+            // Teste 21: valores esperados com as regras de cada tipo
+            // Veiculo: diária x dias | Carro: diária x dias + seguro de R$ 15,00 por dia
+            // Patinete: diária x dias, com 10% de desconto a partir de 3 dias
+            // ATENÇÃO: se o grupo mudar alguma regra, atualizar estes valores.
+            Console.WriteLine("[Teste 21 - Veiculo, 3 dias = R$ 300,00]: " +
+                (frotaDemo[0].CalcularAluguel(3) == 300.00m ? "PASSOU" : "FALHOU"));
+            Console.WriteLine("[Teste 21 - Carro, 5 dias = R$ 825,00]: " +
+                (frotaDemo[1].CalcularAluguel(5) == 825.00m ? "PASSOU" : "FALHOU"));
+            Console.WriteLine("[Teste 21 - Patinete, 5 dias = R$ 157,50]: " +
+                (frotaDemo[2].CalcularAluguel(5) == 157.50m ? "PASSOU" : "FALHOU"));
+
+            // Teste 21b: o desconto do Patinete só vale a partir de 3 dias
+            Console.WriteLine("[Teste 21b - Patinete, 2 dias sem desconto = R$ 70,00]: " +
+                (frotaDemo[2].CalcularAluguel(2) == 70.00m ? "PASSOU" : "FALHOU"));
+            Console.WriteLine("[Teste 21b - Patinete, 3 dias com desconto = R$ 94,50]: " +
+                (frotaDemo[2].CalcularAluguel(3) == 94.50m ? "PASSOU" : "FALHOU"));
+
+            // Teste 21c: o mesmo número de dias gera valores diferentes por tipo (polimorfismo visível)
+            decimal aluguelCarro = new Carro(204, "CAR4R04", "Fiat Argo", 100.00m, 4).CalcularAluguel(5);
+            decimal aluguelPatinete = new Patinete(205, "PAT5N05", "Patinete Teste", 100.00m, 30).CalcularAluguel(5);
+            Console.WriteLine("[Teste 21c - Mesma diária (R$ 100,00) e 5 dias: tipos diferentes dão valores diferentes]: " +
+                (aluguelCarro == 575.00m && aluguelPatinete == 450.00m && aluguelCarro != aluguelPatinete ? "PASSOU" : "FALHOU") +
+                " (Carro: R$ " + aluguelCarro.ToString("F2") + " | Patinete: R$ " + aluguelPatinete.ToString("F2") + ")");
+
+            // Teste 22: a validação de dias vale para todos os tipos, mesmo via Veiculo
+            foreach (Veiculo v in frotaDemo)
+            {
+                try
+                {
+                    Console.Write("[Teste 22 - " + v.GetType().Name + " com 0 dias]: ");
+                    v.CalcularAluguel(0);
+                    Console.WriteLine("FALHOU (Permitiu 0 dias)");
+                }
+                catch (ArgumentException ex)
+                {
+                    Console.WriteLine("PASSOU -> " + ex.Message);
+                }
+            }
+
+            try
+            {
+                Console.Write("[Teste 22 - Carro com -3 dias]: ");
+                frotaDemo[1].CalcularAluguel(-3);
+                Console.WriteLine("FALHOU (Permitiu dias negativos)");
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine("PASSOU -> " + ex.Message);
+            }
+
+            // Teste 23: uma referência Veiculo só enxerga o que Veiculo declara.
+            // Para acessar membros específicos é preciso verificar o tipo real.
+            Console.WriteLine("\n--- Membros específicos via verificação de tipo ---");
+            foreach (Veiculo v in frotaDemo)
+            {
+                if (v is Carro c)
+                {
+                    Console.WriteLine(c.Modelo + " é um Carro com " + c.QuantidadePortas + " portas.");
+                }
+                else if (v is Patinete p)
+                {
+                    Console.WriteLine(p.Modelo + " é um Patinete com autonomia de " + p.AutonomiaBateria + " km.");
+                }
+                else
+                {
+                    Console.WriteLine(v.Modelo + " é um Veiculo genérico (sem membros específicos).");
+                }
+            }
+
+            // Teste 24: Patinete é sealed (não pode ter subclasses)
+            Console.WriteLine("\n[Teste 24 - Patinete é sealed]: " +
+                (typeof(Patinete).IsSealed ? "PASSOU" : "FALHOU"));
+
+            // Teste 25: Carro NÃO é sealed (CarroEletrico precisa herdar dele)
+            Console.WriteLine("[Teste 25 - Carro não é sealed]: " +
+                (!typeof(Carro).IsSealed ? "PASSOU" : "FALHOU"));
+
+            // Teste 26: manutenção (sobrecarga) funciona em subclasses via herança
+            Console.WriteLine("[Teste 26 - Manutenção herdada pelo Carro]: " +
+                (comoCarro.RealizarManutencao().Contains("preventiva") &&
+                 comoCarro.RealizarManutencao("Filtro de óleo").Contains("corretiva") ? "PASSOU" : "FALHOU"));
+            Console.WriteLine("[Teste 26 - Manutenção herdada pelo Patinete]: " +
+                (comoPatinete.RealizarManutencao().Contains("preventiva") &&
+                 comoPatinete.RealizarManutencao("Pneu").Contains("corretiva") ? "PASSOU" : "FALHOU"));
+
+            Console.WriteLine("\nTotal final de veículos criados: " + ConfiguradorSistema.TotalVeiculos);
         }
     }
 }

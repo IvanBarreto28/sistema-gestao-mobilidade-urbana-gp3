@@ -4,6 +4,10 @@ namespace UrbanDrive.Models.Entities
 {
     public sealed class Patinete : Veiculo
     {
+        // Regra de aluguel do Patinete: 10% de desconto a partir de 3 dias
+        public const int DiasParaDesconto = 3;
+        public const decimal PercentualDesconto = 0.10m;
+
         private int autonomiaBateria;
 
         public int AutonomiaBateria
@@ -27,13 +31,15 @@ namespace UrbanDrive.Models.Entities
 
         public override decimal CalcularAluguel(int dias)
         {
-            if (dias <= 0)
+            // A base valida os dias (lança ArgumentException se dias <= 0)
+            decimal valorBase = base.CalcularAluguel(dias);
+
+            if (dias >= DiasParaDesconto)
             {
-                throw new ArgumentException("A quantidade de dias deve ser maior que zero.");
+                return valorBase * (1m - PercentualDesconto);
             }
 
-          
-            return ValorDiaria * dias;
+            return valorBase;
         }
     }
 }
