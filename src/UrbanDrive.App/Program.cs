@@ -135,6 +135,39 @@ namespace UrbanDrive.App
             decimal valorAluguel = carro.CalcularAluguel(5);
 
             Console.WriteLine("Aluguel por 5 dias: R$ " + valorAluguel.ToString("F2"));
+
+            Console.WriteLine("\n=== Teste da Classe Patinete ===");
+
+            Patinete patinete = new Patinete(
+                11,
+                "PAT1E23",
+                "Xiaomi Mi Scooter",
+                35.00m,
+                45
+            );
+
+            Console.WriteLine("Modelo: " + patinete.Modelo);
+            Console.WriteLine("Placa: " + patinete.Placa);
+            Console.WriteLine("Autonomia da bateria: " + patinete.AutonomiaBateria + " km");
+            Console.WriteLine("Valor da diária: R$ " + patinete.ValorDiaria.ToString("F2"));
+
+            decimal valorAluguelPatinete = patinete.CalcularAluguel(5);
+
+            Console.WriteLine("Aluguel por 5 dias: R$ " + valorAluguelPatinete.ToString("F2"));
+
+            // Teste de validação da autonomia da bateria
+            try
+            {
+                Console.Write("[Teste Patinete - Autonomia inválida]: ");
+                Patinete pInvalido = new Patinete(12, "PAT9Z99", "Patinete Inválido", 30.00m, 0);
+                Console.WriteLine("FALHOU (Permitiu autonomia zero ou negativa)");
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine("PASSOU -> " + ex.Message);
+            }
+
+
         }
 
         //Membros estáticos (ConfiguradorSistema)
