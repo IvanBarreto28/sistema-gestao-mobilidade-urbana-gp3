@@ -95,7 +95,7 @@ namespace UrbanDrive.App
             {
                 Console.WriteLine("PASSOU -> " + ex.Message);
             }
-            
+
             Console.WriteLine("\n=== Teste de Motorista e CNH ===");
 
             Motorista motorista = new Motorista(
@@ -117,6 +117,24 @@ namespace UrbanDrive.App
 
             TestarConfiguradorSistema();
             TestarManutencao(veiculo);
+            Console.WriteLine("\n=== Teste da Classe Carro ===");
+
+            Carro carro = new Carro(
+                10,
+                "ABC1D23",
+                "Honda Civic",
+                150.00m,
+                4
+            );
+
+            Console.WriteLine("Modelo: " + carro.Modelo);
+            Console.WriteLine("Placa: " + carro.Placa);
+            Console.WriteLine("Quantidade de portas: " + carro.QuantidadePortas);
+            Console.WriteLine("Valor da diária: R$ " + carro.ValorDiaria.ToString("F2"));
+
+            decimal valorAluguel = carro.CalcularAluguel(5);
+
+            Console.WriteLine("Aluguel por 5 dias: R$ " + valorAluguel.ToString("F2"));
         }
 
         //Membros estáticos (ConfiguradorSistema)

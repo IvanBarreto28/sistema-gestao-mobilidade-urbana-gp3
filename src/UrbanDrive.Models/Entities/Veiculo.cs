@@ -85,5 +85,15 @@ namespace UrbanDrive.Models.Entities
 
             return $"Manutenção corretiva realizada no veículo {Modelo} (Placa: {Placa}): substituição da peça '{pecaSubstituida.Trim()}' concluída.";
         }
+        
+        public virtual decimal CalcularAluguel(int dias)
+        {
+            if (dias <= 0)
+            {
+                throw new ArgumentException("A quantidade de dias deve ser maior que zero.");
+            }
+
+            return ValorDiaria * dias;
+        }
     }
 }
