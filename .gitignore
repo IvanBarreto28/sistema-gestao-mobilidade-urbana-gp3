@@ -111,3 +111,6 @@ artifacts/
 # Visual Studio cache files
 *.[Cc]ache
 !?*.[Cc]ache/
+
+# Executáveis gerados por publish (arquivos grandes, não versionar)
+dist/
