@@ -4,6 +4,9 @@ namespace UrbanDrive.Models.Entities
 {
     public class Carro : Veiculo
     {
+        // Regra de aluguel do Carro: valor da base + seguro fixo por dia
+        public const decimal SeguroDiario = 15.00m;
+
         private int quantidadePortas;
 
         public int QuantidadePortas
@@ -29,12 +32,16 @@ namespace UrbanDrive.Models.Entities
 
         public override decimal CalcularAluguel(int dias)
         {
-            if (dias <= 0)
-            {
-                throw new ArgumentException("A quantidade de dias deve ser maior que zero.");
-            }
+            // A base valida os dias (lança ArgumentException se dias <= 0)
+            decimal valorBase = base.CalcularAluguel(dias);
 
-            return ValorDiaria * dias;
+            return valorBase + (SeguroDiario * dias);
+        }
+
+        public override string GerarRelatorio()
+        {
+            return $"[CARRO] ID: {Identificador} | Placa: {Placa} | Modelo: {Modelo} | " +
+                   $"Diária: R$ {ValorDiaria:F2} | Portas: {QuantidadePortas}";
         }
     }
 }

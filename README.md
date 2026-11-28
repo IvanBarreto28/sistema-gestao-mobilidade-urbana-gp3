@@ -43,3 +43,11 @@ Na raiz do repositório, execute os comandos abaixo no terminal:
    ```bash
    dotnet run --project src/UrbanDrive.App/UrbanDrive.App.csproj
    ```
+
+## Sprint 4 — Abstração e relatórios
+
+- `Veiculo` passou a ser uma classe abstrata e implementa `IImprimivel`.
+- `IImprimivel` define o método `GerarRelatorio()`.
+- `Carro` e `Patinete` sobrescrevem `GerarRelatorio()` para incluir seus dados específicos.
+- O `Program.cs` demonstra o uso da interface por meio de uma lista de `IImprimivel`.
+- Uma classe interna de teste (`VeiculoGenericoTeste`) preserva os cenários legados que precisavam de um veículo genérico concreto, sem permitir a instanciação direta de `Veiculo`.
