@@ -1,53 +1,73 @@
 # 🚗 UrbanDrive — Sistema de Gestão de Mobilidade Urbana (Grupo 3)
 
-O **UrbanDrive** é um sistema de gestão para empresas de transporte multimodal desenvolvido em **C# (.NET 10.0)**, aplicando os conceitos fundamentais de Programação Orientada a Objetos (POO).
+O **UrbanDrive** é um sistema de gerenciamento para empresas de transporte multimodal desenvolvido em **C# (.NET 10.0)**, aplicando os conceitos fundamentais de Programação Orientada a Objetos (POO): encapsulamento, composição, agregação, associação, membros estáticos, herança, polimorfismo, classes abstratas/seladas e interfaces.
+
+## 👥 Integrantes do Grupo 3
+- Filipe
+- Guilherme Thiebaut
+- Ivan Barreto
+- Samuel Araújo Silva
 
 ## 📂 Arquitetura do Projeto
-
-O repositório segue a separação de responsabilidades recomendada na especificação do trabalho:
 
 ```text
 sistema-gestao-mobilidade-urbana-gp3/
 ├── src/
 │   ├── UrbanDrive.Models/
-│   │   ├── Entities/
-│   │   │   └── Veiculo.cs
-│   │   ├── Interfaces/
-│   │   ├── Enums/
-│   │   └── UrbanDrive.Models.csproj
+│   │   ├── Entities/          # Veiculo, Carro, CarroEletrico, Patinete, Motorista, CNH, Frota, Locacao, ConfiguradorSistema
+│   │   └── Interfaces/        # IImprimivel, IEletrico
 │   ├── UrbanDrive.Services/
-│   │   └── UrbanDrive.Services.csproj
+│   │   └── GestaoMobilidadeService.cs
 │   └── UrbanDrive.App/
-│       ├── Program.cs
-│       └── UrbanDrive.App.csproj
+│       └── Program.cs         # Aplicação de console e suíte de testes (--test)
 ├── docs/
 │   ├── diagramas/
+│   │   └── diagrama-classes.md
 │   ├── sprints/
+│   │   ├── sprint-1.md
+│   │   ├── sprint-2.md
+│   │   ├── sprint-3.md
+│   │   └── sprint-4.md
+│   ├── product-backlog.md
+│   ├── relatorio-final.md
+│   ├── apresentacao.md
 │   └── README.md
-├── tests/
-├── .gitignore
 ├── UrbanDrive.slnx
 └── README.md
 ```
 
-## 🚀 Como Compilar e Executar
+## 🛠️ Pré-requisitos e Instalação
 
-Na raiz do repositório, execute os comandos abaixo no terminal:
+1. Instale o **.NET 10.0 SDK** (verificado com `dotnet --version` >= `10.0`).
+2. Clone o repositório:
+   ```bash
+   git clone https://github.com/IvanBarreto28/sistema-gestao-mobilidade-urbana-gp3.git
+   cd sistema-gestao-mobilidade-urbana-gp3
+   ```
+
+## 🚀 Como Compilar, Executar e Testar
 
 1. **Compilar toda a Solution:**
    ```bash
    dotnet build UrbanDrive.slnx
    ```
 
-2. **Executar a aplicação de consola:**
+2. **Executar a aplicação de console (modo interativo):**
    ```bash
    dotnet run --project src/UrbanDrive.App/UrbanDrive.App.csproj
    ```
+   O menu oferece operações para:
+   - Cadastrar veículos (`Carro`, `Patinete`, `CarroEletrico`);
+   - Consultar veículos e contador global (`ConfiguradorSistema`);
+   - Simular cálculos polimórficos de aluguel;
+   - Operar veículos elétricos (`Rodar` e `Recarregar` via `IEletrico`);
+   - Cadastrar motorista (`Motorista` + `CNH`) e registrar `Locacao`;
+   - Realizar manutenção preventiva e corretiva (sobrecarga);
+   - Exibir relatórios unificados via `IImprimivel`;
+   - Executar a suíte de testes integrada.
 
-## Sprint 4 — Abstração e relatórios
-
-- `Veiculo` passou a ser uma classe abstrata e implementa `IImprimivel`.
-- `IImprimivel` define o método `GerarRelatorio()`.
-- `Carro` e `Patinete` sobrescrevem `GerarRelatorio()` para incluir seus dados específicos.
-- O `Program.cs` demonstra o uso da interface por meio de uma lista de `IImprimivel`.
-- Uma classe interna de teste (`VeiculoGenericoTeste`) preserva os cenários legados que precisavam de um veículo genérico concreto, sem permitir a instanciação direta de `Veiculo`.
+3. **Executar a suíte automatizada de testes (modo não interativo):**
+   ```bash
+   dotnet run --project src/UrbanDrive.App/UrbanDrive.App.csproj -- --test
+   ```
+   Executa os 45+ cenários de verificação (encapsulamento, composição, agregação, membros estáticos, herança, polimorfismo, `IImprimivel`, `IEletrico`, `Frota` e `Locacao`) e retorna código `0` se todos passarem.

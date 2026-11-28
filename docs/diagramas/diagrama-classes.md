@@ -1,4 +1,4 @@
-# Diagrama de Classes — UrbanDrive
+# Diagrama de Classes — UrbanDrive (Versão Final)
 
 ```mermaid
 classDiagram
@@ -30,7 +30,6 @@ classDiagram
         +CalcularAluguel(int dias) decimal
         +GerarRelatorio() string
     }
-    note for Carro "Relatório inclui a quantidade de portas."
 
     class Patinete {
         <<sealed>>
@@ -46,7 +45,6 @@ classDiagram
         +CalcularAluguel(int dias) decimal
         +GerarRelatorio() string
     }
-    note for Patinete "Recarga rápida na base, sempre até 100%.\nRelatório inclui autonomia e nível da bateria."
 
     class CarroEletrico {
         +decimal TaxaRecargaDiaria$
@@ -62,7 +60,6 @@ classDiagram
         +CalcularAluguel(int dias) decimal
         +GerarRelatorio() string
     }
-    note for CarroEletrico "Recarga em estação, informando a energia em kWh.\nAluguel: Carro + taxa de recarga por dia."
 
     class IEletrico {
         <<interface>>
@@ -83,6 +80,7 @@ classDiagram
         +string CPF
         +CNH CarteiraHabilitacao
         +Motorista(string, string, string, string, DateTime)
+        +GerarRelatorio() string
     }
 
     class CNH {
@@ -95,6 +93,36 @@ classDiagram
         ~CNH(string, string, DateTime)
     }
 
+    class Frota {
+        -string nome
+        -List~Veiculo~ veiculos
+        +string Nome
+        +IReadOnlyList~Veiculo~ Veiculos
+        +Frota(string)
+        +AdicionarVeiculo(Veiculo)
+        +RemoverVeiculo(int) bool
+        +BuscarPorId(int) Veiculo
+        +BuscarPorPlaca(string) Veiculo
+        +ListarEletricos() IReadOnlyList~IEletrico~
+        +CalcularValorTotalAluguel(int) decimal
+        +GerarRelatorio() string
+    }
+
+    class Locacao {
+        -int id
+        -int dias
+        +int Id
+        +Veiculo Veiculo
+        +Motorista Motorista
+        +DateTime DataLocacao
+        +int Dias
+        +decimal TaxaAplicada
+        +decimal ValorBase
+        +decimal ValorTotal
+        +Locacao(int, Veiculo, Motorista, int)
+        +GerarRelatorio() string
+    }
+
     class ConfiguradorSistema {
         <<static>>
         +decimal TaxaLocacaoPadrao$
@@ -105,23 +133,51 @@ classDiagram
         +RestaurarTaxaPadrao()$
     }
 
+    class GestaoMobilidadeService {
+        -Frota frota
+        -List~Motorista~ motoristas
+        -List~Locacao~ locacoes
+        -int proximoIdLocacao
+        +Frota Frota
+        +IReadOnlyList~Motorista~ Motoristas
+        +IReadOnlyList~Locacao~ Locacoes
+        +GestaoMobilidadeService(string)
+        +CadastrarVeiculo(Veiculo)
+        +CadastrarMotorista(Motorista)
+        +RegistrarLocacao(int, string, int) Locacao
+        +ObterTodosImprimiveis() IReadOnlyList~IImprimivel~
+    }
+
     IImprimivel <|.. Veiculo : implementação
+    IImprimivel <|.. Motorista : implementação
+    IImprimivel <|.. Frota : implementação
+    IImprimivel <|.. Locacao : implementação
     Veiculo <|-- Carro : herança
     Veiculo <|-- Patinete : herança
     Carro <|-- CarroEletrico : herança
     IEletrico <|.. Patinete : implementação
     IEletrico <|.. CarroEletrico : implementação
     Motorista *-- "1" CNH : composição
+    Frota o-- "*" Veiculo : agregação
+    Locacao --> "1" Veiculo : associação
+    Locacao --> "1" Motorista : associação
+    Locacao ..> ConfiguradorSistema : aplica taxa
     Veiculo ..> ConfiguradorSistema : registra no contador
+    GestaoMobilidadeService --> "1" Frota : gerencia
+    GestaoMobilidadeService --> "*" Motorista : gerencia
+    GestaoMobilidadeService --> "*" Locacao : registra
 ```
 
 ## Legenda dos relacionamentos
 
 | Relacionamento | Entre | Significado no código |
 |---|---|---|
-| Implementação | `Veiculo` → `IImprimivel` | `Veiculo` implementa a interface e declara `GerarRelatorio()` como abstrato. |
-| Implementação | `Patinete` e `CarroEletrico` → `IEletrico` | Os dois implementam `NivelBateria`, `Rodar(int km)` e `Recarregar()`, cada um do seu jeito. |
-| Herança | `CarroEletrico` → `Carro` | Reaproveita portas e seguro; soma a taxa de recarga ao aluguel e acrescenta os dados da bateria ao relatório. |
-| Herança | `Carro` e `Patinete` → `Veiculo` | As classes concretas herdam os atributos e comportamentos comuns e implementam o relatório. |
-| Composição | `Motorista` ◆— `CNH` | A `CNH` é criada dentro do construtor de `Motorista`. |
-| Dependência | `Veiculo` ⇢ `ConfiguradorSistema` | O construtor de `Veiculo` registra a criação no contador. |
+| Implementação | `Veiculo`, `Motorista`, `Frota`, `Locacao` → `IImprimivel` | Todas as entidades principais implementam `GerarRelatorio()`. |
+| Implementação | `Patinete` e `CarroEletrico` → `IEletrico` | Implementam `NivelBateria`, `Rodar(int km)` e `Recarregar()`. |
+| Herança | `CarroEletrico` → `Carro` → `Veiculo` | Especialização em dois níveis com reaproveitamento de atributos e regras. |
+| Herança | `Patinete` (`sealed`) → `Veiculo` | Classe selada que impede subtipos e aplica desconto a partir de 3 dias. |
+| Composição | `Motorista` ◆— `CNH` | A `CNH` tem construtor `internal` e só existe criada dentro do construtor de `Motorista`. |
+| Agregação | `Frota` ◇— `Veiculo` | A frota agrupa veículos existentes sem destruir seu ciclo de vida independente. |
+| Associação | `Locacao` → `Veiculo` e `Motorista` | Registra o aluguel vinculando um veículo a um motorista com CNH válida. |
+| Dependência | `Veiculo` e `Locacao` ⇢ `ConfiguradorSistema` | Contador global de veículos e aplicação compartilhada da taxa de locação. |
+| Serviço | `GestaoMobilidadeService` → domínio | Coordena operações de cadastro, locação e consolidação de relatórios fora de `Program.cs`. |
