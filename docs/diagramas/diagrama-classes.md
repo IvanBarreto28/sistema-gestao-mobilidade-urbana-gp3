@@ -1,7 +1,4 @@
-# Diagrama de Classes — UrbanDrive (após a parte de abstração e relatórios da Sprint 4)
-
-> Para visualizar: abra este arquivo no GitHub (renderiza Mermaid automaticamente) ou cole o bloco em https://mermaid.live.
-> Este diagrama registra a alteração de `Veiculo` para classe abstrata e a inclusão de `IImprimivel`.
+# Diagrama de Classes — UrbanDrive
 
 ```mermaid
 classDiagram
@@ -40,12 +37,39 @@ classDiagram
         +int DiasParaDesconto$
         +decimal PercentualDesconto$
         -int autonomiaBateria
+        -int nivelBateria
         +int AutonomiaBateria
+        +int NivelBateria
         +Patinete(int, string, string, decimal, int)
+        +Rodar(int km)
+        +Recarregar() string
         +CalcularAluguel(int dias) decimal
         +GerarRelatorio() string
     }
-    note for Patinete "Relatório inclui a autonomia da bateria."
+    note for Patinete "Recarga rápida na base, sempre até 100%.\nRelatório inclui autonomia e nível da bateria."
+
+    class CarroEletrico {
+        +decimal TaxaRecargaDiaria$
+        -decimal capacidadeBateriaKwh
+        -int autonomiaBateria
+        -int nivelBateria
+        +decimal CapacidadeBateriaKwh
+        +int AutonomiaBateria
+        +int NivelBateria
+        +CarroEletrico(int, string, string, decimal, int, decimal, int)
+        +Rodar(int km)
+        +Recarregar() string
+        +CalcularAluguel(int dias) decimal
+        +GerarRelatorio() string
+    }
+    note for CarroEletrico "Recarga em estação, informando a energia em kWh.\nAluguel: Carro + taxa de recarga por dia."
+
+    class IEletrico {
+        <<interface>>
+        +int NivelBateria
+        +Rodar(int km)
+        +Recarregar() string
+    }
 
     class IImprimivel {
         <<interface>>
@@ -84,6 +108,9 @@ classDiagram
     IImprimivel <|.. Veiculo : implementação
     Veiculo <|-- Carro : herança
     Veiculo <|-- Patinete : herança
+    Carro <|-- CarroEletrico : herança
+    IEletrico <|.. Patinete : implementação
+    IEletrico <|.. CarroEletrico : implementação
     Motorista *-- "1" CNH : composição
     Veiculo ..> ConfiguradorSistema : registra no contador
 ```
@@ -93,12 +120,8 @@ classDiagram
 | Relacionamento | Entre | Significado no código |
 |---|---|---|
 | Implementação | `Veiculo` → `IImprimivel` | `Veiculo` implementa a interface e declara `GerarRelatorio()` como abstrato. |
+| Implementação | `Patinete` e `CarroEletrico` → `IEletrico` | Os dois implementam `NivelBateria`, `Rodar(int km)` e `Recarregar()`, cada um do seu jeito. |
+| Herança | `CarroEletrico` → `Carro` | Reaproveita portas e seguro; soma a taxa de recarga ao aluguel e acrescenta os dados da bateria ao relatório. |
 | Herança | `Carro` e `Patinete` → `Veiculo` | As classes concretas herdam os atributos e comportamentos comuns e implementam o relatório. |
 | Composição | `Motorista` ◆— `CNH` | A `CNH` é criada dentro do construtor de `Motorista`. |
 | Dependência | `Veiculo` ⇢ `ConfiguradorSistema` | O construtor de `Veiculo` registra a criação no contador. |
-
-## Pendências do diagrama
-
-- `Frota` ainda não está representada porque não existe no código desta versão.
-- Não há relacionamento entre `Motorista` e `Veiculo` no código atual.
-- A `TaxaLocacao` do `ConfiguradorSistema` ainda não é usada por `CalcularAluguel`.
