@@ -1,8 +1,9 @@
 using System;
+using UrbanDrive.Models.Interfaces;
 
 namespace UrbanDrive.Models.Entities
 {
-    public class Veiculo
+    public abstract class Veiculo : IImprimivel
     {
         private int identificador;
         private string placa = string.Empty;
@@ -95,5 +96,11 @@ namespace UrbanDrive.Models.Entities
 
             return ValorDiaria * dias;
         }
+
+        /// <summary>
+        /// Gera o relatório com os dados comuns de qualquer veículo.
+        /// Cada tipo concreto complementa o relatório com suas informações específicas.
+        /// </summary>
+        public abstract string GerarRelatorio();
     }
 }

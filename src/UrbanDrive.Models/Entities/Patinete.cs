@@ -41,5 +41,11 @@ namespace UrbanDrive.Models.Entities
 
             return valorBase;
         }
+
+        public override string GerarRelatorio()
+        {
+            return $"[PATINETE] ID: {Identificador} | Placa: {Placa} | Modelo: {Modelo} | " +
+                   $"Diária: R$ {ValorDiaria:F2} | Autonomia: {AutonomiaBateria} km";
+        }
     }
 }

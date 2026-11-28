@@ -1,13 +1,14 @@
-# Diagrama de Classes — UrbanDrive (estado após a Sprint 3)
+# Diagrama de Classes — UrbanDrive (após a parte de abstração e relatórios da Sprint 4)
 
 > Para visualizar: abra este arquivo no GitHub (renderiza Mermaid automaticamente) ou cole o bloco em https://mermaid.live.
-> Reflete somente o que existe hoje no código. Classes das próximas sprints (Frota, CarroEletrico, interfaces) devem ser adicionadas quando forem integradas.
+> Este diagrama registra a alteração de `Veiculo` para classe abstrata e a inclusão de `IImprimivel`.
 
 ```mermaid
 classDiagram
     direction TB
 
     class Veiculo {
+        <<abstract>>
         -int identificador
         -string placa
         -string modelo
@@ -16,21 +17,23 @@ classDiagram
         +string Placa
         +string Modelo
         +decimal ValorDiaria
-        +Veiculo(int identificador, string placa, string modelo, decimal valorDiaria)
+        +Veiculo(int, string, string, decimal)
+        +GerarRelatorio()* string
         +RealizarManutencao() string
-        +RealizarManutencao(string pecaSubstituida) string
+        +RealizarManutencao(string) string
         +CalcularAluguel(int dias) decimal
     }
-    note for Veiculo "CalcularAluguel é virtual (base do polimorfismo).\nRealizarManutencao tem duas sobrecargas."
+    note for Veiculo "CalcularAluguel é virtual. GerarRelatorio é abstrato."
 
     class Carro {
         +decimal SeguroDiario$
         -int quantidadePortas
         +int QuantidadePortas
-        +Carro(int, string, string, decimal, int quantidadePortas)
+        +Carro(int, string, string, decimal, int)
         +CalcularAluguel(int dias) decimal
+        +GerarRelatorio() string
     }
-    note for Carro "override: base + seguro de R$ 15,00 por dia"
+    note for Carro "Relatório inclui a quantidade de portas."
 
     class Patinete {
         <<sealed>>
@@ -38,10 +41,16 @@ classDiagram
         +decimal PercentualDesconto$
         -int autonomiaBateria
         +int AutonomiaBateria
-        +Patinete(int, string, string, decimal, int autonomiaBateria)
+        +Patinete(int, string, string, decimal, int)
         +CalcularAluguel(int dias) decimal
+        +GerarRelatorio() string
     }
-    note for Patinete "classe sealed: não admite subclasses.\noverride: base com 10% de desconto a partir de 3 dias"
+    note for Patinete "Relatório inclui a autonomia da bateria."
+
+    class IImprimivel {
+        <<interface>>
+        +GerarRelatorio() string
+    }
 
     class Motorista {
         -string nome
@@ -49,7 +58,7 @@ classDiagram
         +string Nome
         +string CPF
         +CNH CarteiraHabilitacao
-        +Motorista(string nome, string cpf, string numeroRegistro, string categoria, DateTime dataValidade)
+        +Motorista(string, string, string, string, DateTime)
     }
 
     class CNH {
@@ -61,7 +70,6 @@ classDiagram
         +DateTime DataValidade
         ~CNH(string, string, DateTime)
     }
-    note for CNH "Construtor internal: só pode ser criada\npor dentro do projeto Models (via Motorista)."
 
     class ConfiguradorSistema {
         <<static>>
@@ -69,10 +77,11 @@ classDiagram
         +decimal TaxaLocacao$
         +int TotalVeiculos$
         ~RegistrarVeiculo()$
-        +AplicarTaxaLocacao(decimal valorBase)$ decimal
+        +AplicarTaxaLocacao(decimal) decimal
         +RestaurarTaxaPadrao()$
     }
 
+    IImprimivel <|.. Veiculo : implementação
     Veiculo <|-- Carro : herança
     Veiculo <|-- Patinete : herança
     Motorista *-- "1" CNH : composição
@@ -83,11 +92,13 @@ classDiagram
 
 | Relacionamento | Entre | Significado no código |
 |---|---|---|
-| Herança | `Carro` → `Veiculo`, `Patinete` → `Veiculo` | `: base(...)` no construtor e `override` em `CalcularAluguel`, que chama `base.CalcularAluguel` |
-| Composição | `Motorista` ◆— `CNH` | A `CNH` é criada dentro do construtor de `Motorista`; não existe sem ele |
-| Dependência | `Veiculo` ⇢ `ConfiguradorSistema` | O construtor de `Veiculo` chama `RegistrarVeiculo()` após validar os dados |
+| Implementação | `Veiculo` → `IImprimivel` | `Veiculo` implementa a interface e declara `GerarRelatorio()` como abstrato. |
+| Herança | `Carro` e `Patinete` → `Veiculo` | As classes concretas herdam os atributos e comportamentos comuns e implementam o relatório. |
+| Composição | `Motorista` ◆— `CNH` | A `CNH` é criada dentro do construtor de `Motorista`. |
+| Dependência | `Veiculo` ⇢ `ConfiguradorSistema` | O construtor de `Veiculo` registra a criação no contador. |
 
 ## Pendências do diagrama
-- `Frota` (agregação com `Veiculo`) ainda não está na main. Adicionar quando for integrada.
+
+- `Frota` ainda não está representada porque não existe no código desta versão.
 - Não há relacionamento entre `Motorista` e `Veiculo` no código atual.
 - A `TaxaLocacao` do `ConfiguradorSistema` ainda não é usada por `CalcularAluguel`.

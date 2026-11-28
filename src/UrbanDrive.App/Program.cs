@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UrbanDrive.Models.Entities;
+using UrbanDrive.Models.Interfaces;
 
 namespace UrbanDrive.App
 {
@@ -11,7 +12,7 @@ namespace UrbanDrive.App
             Console.WriteLine("=== UrbanDrive ===");
 
             // 1. Caso de Sucesso
-            Veiculo veiculo = new Veiculo(
+            Veiculo veiculo = new VeiculoGenericoTeste(
                 1,
                 "ABC1D23",
                 "Honda Civic",
@@ -29,7 +30,7 @@ namespace UrbanDrive.App
             try
             {
                 Console.Write("[Teste 1 - Placa vazia]: ");
-                Veiculo vPlacaVazia = new Veiculo(2, "", "Toyota Corolla", 160.00m);
+                Veiculo vPlacaVazia = new VeiculoGenericoTeste(2, "", "Toyota Corolla", 160.00m);
                 Console.WriteLine("FALHOU (Permitiu placa vazia)");
             }
             catch (ArgumentException ex)
@@ -41,7 +42,7 @@ namespace UrbanDrive.App
             try
             {
                 Console.Write("[Teste 2 - Placa nula]: ");
-                Veiculo vPlacaNula = new Veiculo(3, null!, "Fiat Pulse", 130.00m);
+                Veiculo vPlacaNula = new VeiculoGenericoTeste(3, null!, "Fiat Pulse", 130.00m);
                 Console.WriteLine("FALHOU (Permitiu placa nula)");
             }
             catch (ArgumentException ex)
@@ -53,7 +54,7 @@ namespace UrbanDrive.App
             try
             {
                 Console.Write("[Teste 3 - Placa com espaços]: ");
-                Veiculo vPlacaEspacos = new Veiculo(4, "   ", "Chevrolet Onix", 120.00m);
+                Veiculo vPlacaEspacos = new VeiculoGenericoTeste(4, "   ", "Chevrolet Onix", 120.00m);
                 Console.WriteLine("FALHOU (Permitiu placa com espaços)");
             }
             catch (ArgumentException ex)
@@ -77,7 +78,7 @@ namespace UrbanDrive.App
             try
             {
                 Console.Write("[Teste 5 - Valor da diária negativo]: ");
-                Veiculo vDiariaInvalida = new Veiculo(5, "XYZ9K88", "VW Polo", -50.00m);
+                Veiculo vDiariaInvalida = new VeiculoGenericoTeste(5, "XYZ9K88", "VW Polo", -50.00m);
                 Console.WriteLine("FALHOU (Permitiu diária negativa)");
             }
             catch (ArgumentException ex)
@@ -89,7 +90,7 @@ namespace UrbanDrive.App
             try
             {
                 Console.Write("[Teste 6 - Identificador zero]: ");
-                Veiculo vIdInvalido = new Veiculo(0, "DEF4G56", "Hyundai HB20", 110.00m);
+                Veiculo vIdInvalido = new VeiculoGenericoTeste(0, "DEF4G56", "Hyundai HB20", 110.00m);
                 Console.WriteLine("FALHOU (Permitiu ID zero)");
             }
             catch (ArgumentException ex)
@@ -169,6 +170,7 @@ namespace UrbanDrive.App
             }
 
             TestarPolimorfismo();
+            TestarRelatorios();
         }
 
         //Membros estáticos (ConfiguradorSistema)
@@ -182,8 +184,8 @@ namespace UrbanDrive.App
 
             // Teste 7: o contador aumenta a cada veículo válido criado
             int antes = ConfiguradorSistema.TotalVeiculos;
-            Veiculo v1 = new Veiculo(101, "AAA1A11", "Renault Kwid", 100.00m);
-            Veiculo v2 = new Veiculo(102, "BBB2B22", "Fiat Argo", 200.00m);
+            Veiculo v1 = new VeiculoGenericoTeste(101, "AAA1A11", "Renault Kwid", 100.00m);
+            Veiculo v2 = new VeiculoGenericoTeste(102, "BBB2B22", "Fiat Argo", 200.00m);
             int depois = ConfiguradorSistema.TotalVeiculos;
             Console.WriteLine("[Teste 7 - Contador após criar 2 veículos]: " +
                 (depois == antes + 2 ? "PASSOU" : "FALHOU") +
@@ -193,7 +195,7 @@ namespace UrbanDrive.App
             antes = ConfiguradorSistema.TotalVeiculos;
             try
             {
-                Veiculo invalido = new Veiculo(103, "", "Veículo Inválido", 100.00m);
+                Veiculo invalido = new VeiculoGenericoTeste(103, "", "Veículo Inválido", 100.00m);
             }
             catch (ArgumentException)
             {
@@ -312,7 +314,7 @@ namespace UrbanDrive.App
             // Três objetos de tipos diferentes, todos guardados como Veiculo
             List<Veiculo> frotaDemo = new List<Veiculo>
             {
-                new Veiculo(201, "BAS1C01", "Veículo Genérico", 100.00m),
+                new VeiculoGenericoTeste(201, "BAS1C01", "Veículo Genérico", 100.00m),
                 new Carro(202, "CAR2R02", "Honda Civic", 150.00m, 4),
                 new Patinete(203, "PAT3N03", "Xiaomi Mi Scooter", 35.00m, 45)
             };
@@ -432,5 +434,51 @@ namespace UrbanDrive.App
 
             Console.WriteLine("\nTotal final de veículos criados: " + ConfiguradorSistema.TotalVeiculos);
         }
+
+        // Testes da interface IImprimivel e da classe abstrata Veiculo (Sprint 4)
+        private static void TestarRelatorios()
+        {
+            Console.WriteLine("\n=== Teste da Interface IImprimivel ===");
+
+            Console.WriteLine("[Teste - Veiculo é abstrata]: " +
+                (typeof(Veiculo).IsAbstract ? "PASSOU" : "FALHOU"));
+
+            List<IImprimivel> itensImprimiveis = new List<IImprimivel>
+            {
+                new Carro(301, "REL3C01", "Toyota Corolla", 180.00m, 4),
+                new Patinete(302, "REL3P02", "Segway Ninebot", 40.00m, 35)
+            };
+
+            foreach (IImprimivel item in itensImprimiveis)
+            {
+                string relatorio = item.GerarRelatorio();
+                Console.WriteLine(relatorio);
+
+                bool relatorioValido = !string.IsNullOrWhiteSpace(relatorio);
+                bool contemDetalheEspecifico =
+                    item is Carro ? relatorio.Contains("Portas:") :
+                    item is Patinete && relatorio.Contains("Autonomia:");
+
+                Console.WriteLine("[Teste - Relatório e detalhe específico]: " +
+                    (relatorioValido && contemDetalheEspecifico ? "PASSOU" : "FALHOU"));
+            }
+        }
+
+        // Classe concreta usada somente para preservar os testes legados
+        // que simulavam um veículo genérico antes de Veiculo se tornar abstrata.
+        private sealed class VeiculoGenericoTeste : Veiculo
+        {
+            public VeiculoGenericoTeste(int identificador, string placa, string modelo, decimal valorDiaria)
+                : base(identificador, placa, modelo, valorDiaria)
+            {
+            }
+
+            public override string GerarRelatorio()
+            {
+                return $"[VEÍCULO DE TESTE] ID: {Identificador} | Placa: {Placa} | " +
+                       $"Modelo: {Modelo} | Diária: R$ {ValorDiaria:F2}";
+            }
+        }
+
     }
 }

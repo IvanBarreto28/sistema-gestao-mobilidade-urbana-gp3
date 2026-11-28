@@ -37,5 +37,11 @@ namespace UrbanDrive.Models.Entities
 
             return valorBase + (SeguroDiario * dias);
         }
+
+        public override string GerarRelatorio()
+        {
+            return $"[CARRO] ID: {Identificador} | Placa: {Placa} | Modelo: {Modelo} | " +
+                   $"Diária: R$ {ValorDiaria:F2} | Portas: {QuantidadePortas}";
+        }
     }
 }
