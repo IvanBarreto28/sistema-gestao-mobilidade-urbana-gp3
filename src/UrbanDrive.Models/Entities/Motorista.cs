@@ -1,9 +1,10 @@
 
 using System;
+using UrbanDrive.Models.Interfaces;
 
 namespace UrbanDrive.Models.Entities
 {
-    public class Motorista
+    public class Motorista : IImprimivel
     {
         private string nome = string.Empty;
         private string cpf = string.Empty;
@@ -49,6 +50,13 @@ namespace UrbanDrive.Models.Entities
                 categoria,
                 dataValidade
             );
+        }
+
+        public string GerarRelatorio()
+        {
+            return $"[MOTORISTA] Nome: {Nome} | CPF: {CPF} | " +
+                   $"CNH: {CarteiraHabilitacao.NumeroRegistro} (Cat. {CarteiraHabilitacao.Categoria}, " +
+                   $"Validade: {CarteiraHabilitacao.DataValidade:dd/MM/yyyy})";
         }
     }
 }

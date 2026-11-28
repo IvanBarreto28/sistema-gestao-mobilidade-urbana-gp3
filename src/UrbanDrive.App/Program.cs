@@ -5,26 +5,39 @@ using System;
 using System.Collections.Generic;
 using UrbanDrive.Models.Entities;
 using UrbanDrive.Models.Interfaces;
+using UrbanDrive.Services;
 
 namespace UrbanDrive.App
 {
     class Program
     {
-        static void Main(string[] args)
+        private static int testesFalhos = 0;
+
+        static int Main(string[] args)
         {
-            List<Veiculo> veiculos = new List<Veiculo>();
+            if (args.Length > 0 && args[0] == "--test")
+            {
+                ExecutarTestes();
+                return testesFalhos == 0 ? 0 : 1;
+            }
+
+            GestaoMobilidadeService service = new GestaoMobilidadeService();
             int opcao = -1;
 
             while (opcao != 0)
             {
-                Console.Clear();
-                Console.WriteLine("====================================");
-                Console.WriteLine("       URBANDRIVE - MENU PRINCIPAL  ");
-                Console.WriteLine("====================================");
-                Console.WriteLine("1 - Cadastrar veículo");
+                LimparTela();
+                Console.WriteLine("================================================");
+                Console.WriteLine("          URBANDRIVE - MENU PRINCIPAL           ");
+                Console.WriteLine("================================================");
+                Console.WriteLine("1 - Cadastrar veículo (Carro, Patinete, Elétrico)");
                 Console.WriteLine("2 - Consultar veículos cadastrados");
                 Console.WriteLine("3 - Demonstrar cálculos polimórficos");
-                Console.WriteLine("4 - Executar testes das classes");
+                Console.WriteLine("4 - Operar veículos elétricos (IEletrico)");
+                Console.WriteLine("5 - Cadastrar motorista e registrar locação");
+                Console.WriteLine("6 - Realizar manutenção de veículo");
+                Console.WriteLine("7 - Exibir relatórios gerais (IImprimivel)");
+                Console.WriteLine("8 - Executar suíte de testes das classes");
                 Console.WriteLine("0 - Sair");
                 Console.Write("\nEscolha uma opção: ");
 
@@ -40,16 +53,28 @@ namespace UrbanDrive.App
                 switch (opcao)
                 {
                     case 1:
-                        CadastrarVeiculo(veiculos);
+                        CadastrarVeiculo(service);
                         break;
                     case 2:
-                        ConsultarVeiculos(veiculos);
+                        ConsultarVeiculos(service);
                         break;
                     case 3:
-                        DemonstrarCalculoPolimorfico(veiculos);
+                        DemonstrarCalculoPolimorfico(service);
                         break;
                     case 4:
-                        Console.Clear();
+                        OperarVeiculosEletricos(service);
+                        break;
+                    case 5:
+                        CadastrarMotoristaERegistrarLocacao(service);
+                        break;
+                    case 6:
+                        RealizarManutencaoVeiculo(service);
+                        break;
+                    case 7:
+                        ExibirRelatoriosGerais(service);
+                        break;
+                    case 8:
+                        LimparTela();
                         ExecutarTestes();
                         Pausar();
                         break;
@@ -62,19 +87,22 @@ namespace UrbanDrive.App
                         break;
                 }
             }
+
+            return 0;
         }
 
-        private static void CadastrarVeiculo(List<Veiculo> veiculos)
+        private static void CadastrarVeiculo(GestaoMobilidadeService service)
         {
-            Console.Clear();
+            LimparTela();
             Console.WriteLine("=== CADASTRO DE VEÍCULO ===");
             Console.WriteLine("1 - Carro");
             Console.WriteLine("2 - Patinete");
+            Console.WriteLine("3 - Carro Elétrico");
             Console.Write("\nTipo de veículo: ");
 
             string tipo = Console.ReadLine() ?? "";
 
-            if (tipo != "1" && tipo != "2")
+            if (tipo != "1" && tipo != "2" && tipo != "3")
             {
                 Console.WriteLine("\nTipo inválido.");
                 Pausar();
@@ -101,17 +129,33 @@ namespace UrbanDrive.App
                     int portas = int.Parse(Console.ReadLine() ?? "0");
 
                     Carro carro = new Carro(id, placa, modelo, valorDiaria, portas);
-                    veiculos.Add(carro);
+                    service.CadastrarVeiculo(carro);
                     Console.WriteLine("\nCarro cadastrado com sucesso!");
                 }
-                else
+                else if (tipo == "2")
                 {
                     Console.Write("Autonomia da bateria (km): ");
                     int autonomia = int.Parse(Console.ReadLine() ?? "0");
 
                     Patinete patinete = new Patinete(id, placa, modelo, valorDiaria, autonomia);
-                    veiculos.Add(patinete);
+                    service.CadastrarVeiculo(patinete);
                     Console.WriteLine("\nPatinete cadastrado com sucesso!");
+                }
+                else
+                {
+                    Console.Write("Quantidade de portas: ");
+                    int portas = int.Parse(Console.ReadLine() ?? "0");
+
+                    Console.Write("Capacidade da bateria (kWh): ");
+                    decimal capacidadeKwh = decimal.Parse(Console.ReadLine() ?? "0");
+
+                    Console.Write("Autonomia da bateria (km): ");
+                    int autonomia = int.Parse(Console.ReadLine() ?? "0");
+
+                    CarroEletrico carroEletrico = new CarroEletrico(
+                        id, placa, modelo, valorDiaria, portas, capacidadeKwh, autonomia);
+                    service.CadastrarVeiculo(carroEletrico);
+                    Console.WriteLine("\nCarro elétrico cadastrado com sucesso!");
                 }
             }
             catch (FormatException)
@@ -122,50 +166,42 @@ namespace UrbanDrive.App
             {
                 Console.WriteLine("\nErro de validação: " + ex.Message);
             }
+            catch (InvalidOperationException ex)
+            {
+                Console.WriteLine("\nErro de negócio: " + ex.Message);
+            }
 
             Pausar();
         }
 
-        private static void ConsultarVeiculos(List<Veiculo> veiculos)
+        private static void ConsultarVeiculos(GestaoMobilidadeService service)
         {
-            Console.Clear();
-            Console.WriteLine("=== VEÍCULOS CADASTRADOS ===\n");
+            LimparTela();
+            Console.WriteLine("=== VEÍCULOS CADASTRADOS ===");
+            Console.WriteLine($"Frota: {service.Frota.Nome} | Total global criado (ConfiguradorSistema): {ConfiguradorSistema.TotalVeiculos}\n");
 
-            if (veiculos.Count == 0)
+            if (service.Frota.Veiculos.Count == 0)
             {
                 Console.WriteLine("Nenhum veículo cadastrado.");
                 Pausar();
                 return;
             }
 
-            for (int i = 0; i < veiculos.Count; i++)
+            foreach (Veiculo v in service.Frota.Veiculos)
             {
-                Veiculo v = veiculos[i];
-
-                Console.WriteLine($"ID: {v.Identificador} | Placa: {v.Placa} | Modelo: {v.Modelo}");
-                Console.WriteLine($"Valor da Diária: R$ {v.ValorDiaria:F2}");
-
-                if (v is Carro carro)
-                {
-                    Console.WriteLine($"Tipo: Carro | Portas: {carro.QuantidadePortas}");
-                }
-                else if (v is Patinete patinete)
-                {
-                    Console.WriteLine($"Tipo: Patinete | Autonomia da Bateria: {patinete.AutonomiaBateria} km");
-                }
-
+                Console.WriteLine(v.GerarRelatorio());
                 Console.WriteLine("------------------------------------");
             }
 
             Pausar();
         }
 
-        private static void DemonstrarCalculoPolimorfico(List<Veiculo> veiculos)
+        private static void DemonstrarCalculoPolimorfico(GestaoMobilidadeService service)
         {
-            Console.Clear();
+            LimparTela();
             Console.WriteLine("=== CÁLCULO POLIMÓRFICO DE ALUGUEL ===\n");
 
-            if (veiculos.Count == 0)
+            if (service.Frota.Veiculos.Count == 0)
             {
                 Console.WriteLine("Cadastre ao menos um veículo antes de realizar o cálculo.");
                 Pausar();
@@ -177,14 +213,14 @@ namespace UrbanDrive.App
                 Console.Write("Informe a quantidade de dias para simular o aluguel: ");
                 int dias = int.Parse(Console.ReadLine() ?? "0");
 
-                Console.WriteLine($"\nResultado para {dias} dia(s):\n");
+                Console.WriteLine($"\nResultado para {dias} dia(s) (Taxa do sistema: {ConfiguradorSistema.TaxaLocacao * 100:F0}%):\n");
 
-                for (int i = 0; i < veiculos.Count; i++)
+                foreach (Veiculo v in service.Frota.Veiculos)
                 {
-                    Veiculo v = veiculos[i];
-                    decimal total = v.CalcularAluguel(dias);
+                    decimal valorBase = v.CalcularAluguel(dias);
+                    decimal valorComTaxa = ConfiguradorSistema.AplicarTaxaLocacao(valorBase);
 
-                    Console.WriteLine($"[{v.GetType().Name}] {v.Modelo} (Placa: {v.Placa}) -> Total: R$ {total:F2}");
+                    Console.WriteLine($"[{v.GetType().Name}] {v.Modelo} (Placa: {v.Placa}) -> Base: R$ {valorBase:F2} | Com taxa: R$ {valorComTaxa:F2}");
                 }
             }
             catch (FormatException)
@@ -199,17 +235,202 @@ namespace UrbanDrive.App
             Pausar();
         }
 
+        private static void OperarVeiculosEletricos(GestaoMobilidadeService service)
+        {
+            LimparTela();
+            Console.WriteLine("=== VEÍCULOS ELÉTRICOS (IEletrico) ===\n");
+
+            IReadOnlyList<IEletrico> eletricos = service.Frota.ListarEletricos();
+            if (eletricos.Count == 0)
+            {
+                Console.WriteLine("Nenhum veículo elétrico cadastrado na frota.");
+                Pausar();
+                return;
+            }
+
+            for (int i = 0; i < eletricos.Count; i++)
+            {
+                Veiculo v = (Veiculo)eletricos[i];
+                Console.WriteLine($"{i + 1} - {v.Modelo} ({v.Placa}) | Bateria: {eletricos[i].NivelBateria}%");
+            }
+
+            try
+            {
+                Console.Write("\nEscolha o número do veículo elétrico: ");
+                int indice = int.Parse(Console.ReadLine() ?? "0") - 1;
+                if (indice < 0 || indice >= eletricos.Count)
+                {
+                    Console.WriteLine("\nÍndice inválido.");
+                    Pausar();
+                    return;
+                }
+
+                IEletrico selecionado = eletricos[indice];
+                Console.WriteLine("1 - Rodar (consumir bateria)");
+                Console.WriteLine("2 - Recarregar");
+                Console.Write("Ação: ");
+                string acao = Console.ReadLine() ?? "";
+
+                if (acao == "1")
+                {
+                    Console.Write("Distância em km: ");
+                    int km = int.Parse(Console.ReadLine() ?? "0");
+                    selecionado.Rodar(km);
+                    Console.WriteLine($"\nPercurso concluído! Bateria atual: {selecionado.NivelBateria}%");
+                }
+                else if (acao == "2")
+                {
+                    Console.WriteLine("\n" + selecionado.Recarregar());
+                }
+                else
+                {
+                    Console.WriteLine("\nAção inválida.");
+                }
+            }
+            catch (FormatException)
+            {
+                Console.WriteLine("\nErro: Formato numérico inválido.");
+            }
+            catch (Exception ex) when (ex is ArgumentException || ex is InvalidOperationException)
+            {
+                Console.WriteLine("\nErro: " + ex.Message);
+            }
+
+            Pausar();
+        }
+
+        private static void CadastrarMotoristaERegistrarLocacao(GestaoMobilidadeService service)
+        {
+            LimparTela();
+            Console.WriteLine("=== MOTORISTA E LOCAÇÃO ===\n");
+
+            if (service.Frota.Veiculos.Count == 0)
+            {
+                Console.WriteLine("Cadastre ao menos um veículo antes de registrar uma locação.");
+                Pausar();
+                return;
+            }
+
+            try
+            {
+                Console.Write("Nome do motorista: ");
+                string nome = Console.ReadLine() ?? "";
+                Console.Write("CPF do motorista: ");
+                string cpf = Console.ReadLine() ?? "";
+                Console.Write("Número de registro da CNH: ");
+                string registroCnh = Console.ReadLine() ?? "";
+                Console.Write("Categoria da CNH (ex.: B, AB): ");
+                string categoria = Console.ReadLine() ?? "";
+                Console.Write("Validade da CNH (yyyy-MM-dd): ");
+                DateTime validade = DateTime.Parse(Console.ReadLine() ?? "");
+
+                Motorista motorista = new Motorista(nome, cpf, registroCnh, categoria, validade);
+                service.CadastrarMotorista(motorista);
+
+                Console.Write("ID do veículo para locação: ");
+                int idVeiculo = int.Parse(Console.ReadLine() ?? "0");
+                Console.Write("Quantidade de dias: ");
+                int dias = int.Parse(Console.ReadLine() ?? "0");
+
+                Locacao locacao = service.RegistrarLocacao(idVeiculo, cpf, dias);
+                Console.WriteLine("\nLocação registrada com sucesso!");
+                Console.WriteLine(locacao.GerarRelatorio());
+            }
+            catch (FormatException)
+            {
+                Console.WriteLine("\nErro: Formato de número ou data inválido.");
+            }
+            catch (Exception ex) when (ex is ArgumentException || ex is InvalidOperationException || ex is KeyNotFoundException)
+            {
+                Console.WriteLine("\nErro: " + ex.Message);
+            }
+
+            Pausar();
+        }
+
+        private static void RealizarManutencaoVeiculo(GestaoMobilidadeService service)
+        {
+            LimparTela();
+            Console.WriteLine("=== MANUTENÇÃO DE VEÍCULO ===\n");
+
+            if (service.Frota.Veiculos.Count == 0)
+            {
+                Console.WriteLine("Nenhum veículo cadastrado.");
+                Pausar();
+                return;
+            }
+
+            try
+            {
+                Console.Write("ID do veículo: ");
+                int id = int.Parse(Console.ReadLine() ?? "0");
+                Veiculo? veiculo = service.Frota.BuscarPorId(id);
+
+                if (veiculo == null)
+                {
+                    Console.WriteLine("\nVeículo não encontrado.");
+                    Pausar();
+                    return;
+                }
+
+                Console.Write("Informe a peça substituída (deixe em branco para manutenção preventiva): ");
+                string peca = Console.ReadLine() ?? "";
+
+                string resultado = string.IsNullOrWhiteSpace(peca)
+                    ? veiculo.RealizarManutencao()
+                    : veiculo.RealizarManutencao(peca);
+
+                Console.WriteLine("\n" + resultado);
+            }
+            catch (FormatException)
+            {
+                Console.WriteLine("\nErro: ID inválido.");
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine("\nErro de validação: " + ex.Message);
+            }
+
+            Pausar();
+        }
+
+        private static void ExibirRelatoriosGerais(GestaoMobilidadeService service)
+        {
+            LimparTela();
+            Console.WriteLine("=== RELATÓRIOS GERAIS (IImprimivel) ===\n");
+
+            foreach (IImprimivel item in service.ObterTodosImprimiveis())
+            {
+                Console.WriteLine(item.GerarRelatorio());
+                Console.WriteLine("------------------------------------");
+            }
+
+            Pausar();
+        }
+
+        private static void LimparTela()
+        {
+            if (!Console.IsOutputRedirected)
+            {
+                Console.Clear();
+            }
+        }
+
         private static void Pausar()
         {
-            Console.WriteLine("\nPressione qualquer tecla para continuar...");
-            Console.ReadKey();
+            if (!Console.IsInputRedirected)
+            {
+                Console.WriteLine("\nPressione qualquer tecla para continuar...");
+                Console.ReadKey();
+            }
         }
 
         private static void ExecutarTestes()
         {
+            testesFalhos = 0;
             Console.WriteLine("=== UrbanDrive ===");
 
-            Veiculo veiculo = new Veiculo(
+            Veiculo veiculo = new VeiculoGenericoTeste(
                 1,
                 "ABC1D23",
                 "Honda Civic",
@@ -352,11 +573,21 @@ namespace UrbanDrive.App
                 Console.Write("[Teste Patinete - Autonomia inválida]: ");
                 Patinete pInvalido = new Patinete(12, "PAT9Z99", "Patinete Inválido", 30.00m, 0);
                 Console.WriteLine("FALHOU (Permitiu autonomia zero ou negativa)");
+                testesFalhos++;
             }
             catch (ArgumentException ex)
             {
                 Console.WriteLine("PASSOU -> " + ex.Message);
             }
+
+            TestarPolimorfismo();
+            TestarRelatorios();
+            TestarVeiculosEletricos();
+            TestarFrotaELocacao();
+
+            Console.WriteLine("\n================================================");
+            Console.WriteLine($"RESUMO DOS TESTES: {(testesFalhos == 0 ? "TODOS OS TESTES PASSARAM" : $"{testesFalhos} FALHA(S)")}");
+            Console.WriteLine("================================================");
         }
 
         private static void TestarConfiguradorSistema()
@@ -765,8 +996,50 @@ namespace UrbanDrive.App
             }
         }
 
+        private static void TestarFrotaELocacao()
+        {
+            Console.WriteLine("\n=== Teste de Frota, Locação, IImprimivel e Serviço ===");
+
+            GestaoMobilidadeService service = new GestaoMobilidadeService("Frota Corporativa Teste");
+            Carro carro = new Carro(501, "FRO5A01", "Toyota Corolla", 200.00m, 4);
+            CarroEletrico eletrico = new CarroEletrico(502, "FRO5E02", "Volvo EX30", 250.00m, 4, 69.0m, 380);
+            Patinete patinete = new Patinete(503, "FRO5P03", "Xiaomi Pro 2", 40.00m, 45);
+
+            service.CadastrarVeiculo(carro);
+            service.CadastrarVeiculo(eletrico);
+            service.CadastrarVeiculo(patinete);
+
+            Resultado("Teste 40 - Frota agrega 3 veículos", service.Frota.Veiculos.Count == 3);
+            Resultado("Teste 41 - Frota lista 2 veículos elétricos (IEletrico)", service.Frota.ListarEletricos().Count == 2);
+
+            ExigirExcecao<InvalidOperationException>("Teste 42 - Frota impede placa duplicada",
+                () => service.CadastrarVeiculo(new Carro(504, "FRO5A01", "Outro Carro", 150.00m, 4)));
+
+            Motorista motorista = new Motorista("Ana Silva", "987.654.321-11", "99887766", "B", new DateTime(2030, 10, 15));
+            service.CadastrarMotorista(motorista);
+
+            ConfiguradorSistema.RestaurarTaxaPadrao(); // 10%
+            Locacao locacao = service.RegistrarLocacao(501, "987.654.321-11", 2);
+            // Carro: 200 * 2 + 15 * 2 = 430.00 | Com taxa de 10%: 473.00
+            Resultado("Teste 43 - Locação calcula ValorBase (R$ 430,00) e ValorTotal com taxa (R$ 473,00)",
+                locacao.ValorBase == 430.00m && locacao.ValorTotal == 473.00m);
+
+            Motorista cnhVencida = new Motorista("Carlos Souza", "111.222.333-44", "11223344", "B", new DateTime(2020, 1, 1));
+            service.CadastrarMotorista(cnhVencida);
+            ExigirExcecao<InvalidOperationException>("Teste 44 - Locação bloqueia CNH vencida",
+                () => service.RegistrarLocacao(502, "111.222.333-44", 3));
+
+            var imprimiveis = service.ObterTodosImprimiveis();
+            Resultado("Teste 45 - ObterTodosImprimiveis inclui Frota, 3 Veículos, 2 Motoristas e 1 Locação (7 itens)",
+                imprimiveis.Count == 7);
+        }
+
         private static void Resultado(string nome, bool passou)
         {
+            if (!passou)
+            {
+                testesFalhos++;
+            }
             Console.WriteLine("[" + nome + "]: " + (passou ? "PASSOU" : "FALHOU"));
         }
 
@@ -777,6 +1050,7 @@ namespace UrbanDrive.App
             try
             {
                 acao();
+                testesFalhos++;
                 Console.WriteLine("FALHOU (nenhuma exceção foi lançada)");
             }
             catch (T ex)
@@ -785,6 +1059,7 @@ namespace UrbanDrive.App
             }
             catch (Exception ex)
             {
+                testesFalhos++;
                 Console.WriteLine("FALHOU (lançou " + ex.GetType().Name + " em vez do tipo esperado)");
             }
         }
